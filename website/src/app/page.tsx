@@ -7,7 +7,7 @@ import Divider from "./(components)/Divider";
 
 export default function Home() {
   return (
-    <main className="min-h-screen w-full bg-white relative flex items-center justify-center gap-10 py-10">
+    <main className="min-h-screen w-full bg-white relative flex items-center justify-center gap-10 p-10">
       {/*  Diagonal Cross Grid Bottom Background */}
       <div
         className="absolute inset-0"
@@ -40,21 +40,21 @@ export default function Home() {
           href="https://github.com/itsmeprinceyt/minus_plus_flutter/tree/main/release"
           target="_blank"
           rel="noopener noreferrer"
-          className="w-full max-w-md"
+          className="max-w-md shadow-2xl rounded-xl"
         >
           <Image
             src="/logo.png"
             alt="App Logo"
-            width={500}
-            height={500}
+            width={380}
+            height={380}
             className="object-contain rounded-xl transition-transform duration-1000 hover:scale-110 animate-float"
           />
         </Link>
 
         {/* Glass Card Content */}
-        <div className="w-full max-w-2xl bg-white/0 border border-white/20 backdrop-blur-md shadow-2xl  rounded-xl p-5">
+        <div className="w-full max-w-2xl bg-white/0 border border-white/20 backdrop-blur-md shadow-2xl rounded-xl p-2">
           <div className="p-5 space-y-5">
-            <h1 className="text-4xl font-bold tracking-tight">
+            <h1 className="text-stone-900 text-4xl font-bold tracking-tight">
               Minus Plus Counter
             </h1>
 
