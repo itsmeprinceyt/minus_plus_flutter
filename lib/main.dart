@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
   runApp(const MyApp());
 }
 
@@ -11,9 +17,84 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Counter App',
       theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
-      home: const CounterScreen(),
+      home: const PortraitOnly(child: CounterScreen()),
+    );
+  }
+}
+
+class PortraitOnly extends StatelessWidget {
+  final Widget child;
+
+  const PortraitOnly({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return OrientationBuilder(
+      builder: (context, orientation) {
+        if (orientation == Orientation.landscape) {
+          return Scaffold(
+            backgroundColor: Colors.black,
+            body: Center(
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.screen_rotation,
+                      size: 80,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Please rotate your device',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'This app only works in portrait mode',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 16, color: Colors.white70),
+                    ),
+                    const SizedBox(height: 30),
+                    ElevatedButton.icon(
+                      onPressed: () {},
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color.fromRGBO(255, 255, 255, 0.1),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(25),
+                          side: BorderSide(
+                            color: Color.fromRGBO(255, 255, 255, 0.3),
+                          ),
+                        ),
+                      ),
+                      icon: const Icon(Icons.phone_android, size: 16),
+                      label: const Text(
+                        'Rotate to Portrait',
+                        style: TextStyle(fontSize: 14),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
+        return child;
+      },
     );
   }
 }
@@ -48,7 +129,9 @@ class _CounterScreenState extends State<CounterScreen> {
 
   void _incrementCounter() {
     setState(() {
-      _counter++;
+      if (_counter < 1000000000000000) {
+        _counter++;
+      }
       _saveCounter();
     });
   }
@@ -70,15 +153,53 @@ class _CounterScreenState extends State<CounterScreen> {
   }
 
   String _formatNumber(int number) {
-    if (number < 10000) {
+    const thresholds = [
+      1000, // K
+      1000000, // Million
+      1000000000, // Billion
+      1000000000000, // Trillion
+      1000000000000000, // Quadrillion (max)
+    ];
+    const suffixes = ['', 'K', 'M', 'B', 'T', 'Q'];
+
+    if (number >= 1000000000000000) {
+      return "MAX REACHED!";
+    }
+
+    int suffixIndex = 0;
+    double formattedNumber = number.toDouble();
+
+    for (int i = thresholds.length - 1; i >= 0; i--) {
+      if (number >= thresholds[i]) {
+        suffixIndex = i + 1;
+        formattedNumber = number / thresholds[i];
+        break;
+      }
+    }
+
+    if (suffixIndex == 0) {
       return number.toString().replaceAllMapped(
         RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
         (Match m) => '${m[1]},',
       );
     } else {
-      double kValue = number / 1000;
-      return '${kValue.toStringAsFixed(kValue.truncateToDouble() == kValue ? 0 : 1)}K';
+      bool isWholeNumber =
+          formattedNumber.truncateToDouble() == formattedNumber;
+      int decimalPlaces = isWholeNumber ? 0 : 1;
+
+      if (formattedNumber >= 100 && decimalPlaces == 1) {
+        decimalPlaces = 0;
+      }
+
+      return '${formattedNumber.toStringAsFixed(decimalPlaces)}${suffixes[suffixIndex]}';
     }
+  }
+
+  List<int> _getRGBValues(Color color) {
+    final red = (color.r * 255.0).round().clamp(0, 255);
+    final green = (color.g * 255.0).round().clamp(0, 255);
+    final blue = (color.b * 255.0).round().clamp(0, 255);
+    return [red, green, blue];
   }
 
   @override
@@ -97,20 +218,18 @@ class _CounterScreenState extends State<CounterScreen> {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                Colors.black.withOpacity(0.6),
-                Colors.black.withOpacity(0.3),
+                Color.fromRGBO(0, 0, 0, 0.6),
+                Color.fromRGBO(0, 0, 0, 0.9),
               ],
             ),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Main Counter Display
               Container(
                 margin: const EdgeInsets.only(bottom: 20),
                 child: Column(
                   children: [
-                    // Main large counter text
                     Text(
                       _formatNumber(_counter),
                       style: const TextStyle(
@@ -121,15 +240,14 @@ class _CounterScreenState extends State<CounterScreen> {
                         letterSpacing: 1.5,
                       ),
                     ),
-                    // Exact count in small text (visible when >= 10,000)
-                    if (_counter >= 10000)
+                    if (_counter >= 1000 && _counter < 1000000000000000)
                       Padding(
                         padding: const EdgeInsets.only(top: 8),
                         child: Text(
                           'Exact: $_counter',
                           style: const TextStyle(
                             fontSize: 16,
-                            color: Colors.white70,
+                            color: Color.fromRGBO(255, 255, 255, 0.7),
                             fontFamily: 'Roboto',
                           ),
                         ),
@@ -138,64 +256,71 @@ class _CounterScreenState extends State<CounterScreen> {
                 ),
               ),
 
-              // Buttons Container
               Container(
                 margin: const EdgeInsets.only(top: 50),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Minus Button
                     _buildButton(
                       icon: Icons.remove,
                       onPressed: _decrementCounter,
-                      color: Colors.redAccent,
+                      color: Colors.red,
                     ),
 
                     const SizedBox(width: 40),
 
-                    // Plus Button
                     _buildButton(
                       icon: Icons.add,
                       onPressed: _incrementCounter,
-                      color: Colors.greenAccent,
+                      color: Colors.green,
                     ),
                   ],
                 ),
               ),
 
-              // Reset Button
               Container(
                 margin: const EdgeInsets.only(top: 30),
                 child: ElevatedButton.icon(
                   onPressed: _resetCounter,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white.withOpacity(0.2),
+                    backgroundColor: Colors.transparent,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 30,
-                      vertical: 15,
+                      horizontal: 20,
+                      vertical: 12,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(25),
-                      side: BorderSide(color: Colors.white.withOpacity(0.5)),
+                      side: BorderSide(
+                        color: Color.fromRGBO(255, 255, 255, 0.2),
+                        width: 1.5,
+                      ),
                     ),
+                    elevation: 0,
+                    shadowColor: Colors.transparent,
                   ),
-                  icon: const Icon(Icons.refresh, size: 20),
+                  icon: const Icon(Icons.refresh, size: 16),
                   label: const Text(
                     'Reset Counter',
-                    style: TextStyle(fontSize: 16),
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0.5,
+                    ),
                   ),
                 ),
               ),
 
-              // Instructions
               Container(
                 margin: const EdgeInsets.only(top: 50),
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: const Text(
                   'Counter will automatically save locally\nand persist between app launches',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white70, fontSize: 14),
+                  style: TextStyle(
+                    color: Color.fromRGBO(255, 255, 255, 0.7),
+                    fontSize: 14,
+                  ),
                 ),
               ),
             ],
@@ -210,16 +335,21 @@ class _CounterScreenState extends State<CounterScreen> {
     required VoidCallback onPressed,
     required Color color,
   }) {
+    final rgbValues = _getRGBValues(color);
+    final red = rgbValues[0];
+    final green = rgbValues[1];
+    final blue = rgbValues[2];
+
     return Container(
       width: 70,
       height: 70,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: Color.fromRGBO(255, 255, 255, 0.1),
         shape: BoxShape.circle,
-        border: Border.all(color: Colors.white.withOpacity(0.3), width: 2),
+        border: Border.all(color: Color.fromRGBO(255, 255, 255, 0.3), width: 2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: Color.fromRGBO(0, 0, 0, 0.3),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -234,7 +364,10 @@ class _CounterScreenState extends State<CounterScreen> {
           child: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [color.withOpacity(0.8), color.withOpacity(0.6)],
+                colors: [
+                  Color.fromRGBO(red, green, blue, 0.8),
+                  Color.fromRGBO(red, green, blue, 0.8),
+                ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
