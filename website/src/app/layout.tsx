@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import Loader from "./(components)/Loader";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://minus-plus-flutter-app.vercel.app/"),
+  metadataBase: new URL("https://minus-plus-flutter.vercel.app/"),
   title: "Minus Plus – Simple Counter",
   description:
     "Minus Plus is a clean and simple Flutter-based counter app.",
