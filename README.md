@@ -19,7 +19,7 @@ Large numbers are intelligently formatted (K, M, B, etc.) while still showing th
 - **Website Repository (Next.js)**  
   https://github.com/itsmeprinceyt/minus_plus_flutter/tree/main/website
 
-## 🛠 Tech Stack
+## Tech Stack
 
 - Flutter (Mobile App)
 - Next.js + Tailwind CSS (Website)
